@@ -1,4 +1,4 @@
-// Neon Drift 3D - Three.js WebGL Engine
+// Neon Drift 3D - Three.js WebGL Engine - VISUAL UPGRADE EDITION
 
 // Canvas and DOM Elements
 const canvas = document.getElementById('gameCanvas');
@@ -98,7 +98,6 @@ class AudioSynth {
         if (this.ctx.state === 'suspended') {
             this.ctx.resume();
         }
-        // Map speed to engine humming pitch
         const baseFreq = 40;
         const maxFreq = 130;
         const targetFreq = baseFreq + (speedRatio * (maxFreq - baseFreq));
@@ -119,7 +118,6 @@ class AudioSynth {
         if (this.bgmInterval) return;
 
         let noteIndex = 0;
-        // Synthwave looping bassline frequencies (D1, F1, G1, Bb1)
         const notes = [36.71, 43.65, 48.99, 58.27]; 
         
         this.bgmInterval = setInterval(() => {
@@ -186,9 +184,9 @@ class AudioSynth {
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(587.33, now); // D5
-        osc.frequency.setValueAtTime(698.46, now + 0.08); // F5
-        osc.frequency.setValueAtTime(880.00, now + 0.16); // A5
+        osc.frequency.setValueAtTime(587.33, now);
+        osc.frequency.setValueAtTime(698.46, now + 0.08);
+        osc.frequency.setValueAtTime(880.00, now + 0.16);
         gain.gain.setValueAtTime(0.05, now);
         gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
         osc.connect(gain);
@@ -242,56 +240,93 @@ const audio = new AudioSynth();
 
 // --- Procedural 3D Model Builders ---
 
-// Create a futuristic glowing sports car
+// Create a highly detailed shiny metallic sports car
 function create3DCar(mainColor, isPlayer = false, isPolice = false) {
     const carGroup = new THREE.Group();
 
-    // 1. Main Chassis/Body
-    const bodyGeom = new THREE.BoxGeometry(16, 5, 30);
+    // 1. Shiny Metallic Car Body material (Asphalt metallic paint style)
     const bodyMat = new THREE.MeshStandardMaterial({
         color: mainColor,
-        roughness: 0.1,
-        metalness: 0.8
+        roughness: 0.1,  // Very smooth and shiny
+        metalness: 0.9   // Highly metallic reflections
     });
-    const bodyMesh = new THREE.Mesh(bodyGeom, bodyMat);
-    bodyMesh.position.y = 3.5;
-    carGroup.add(bodyMesh);
 
-    // Front hood slant
-    const hoodGeom = new THREE.BoxGeometry(15, 3, 10);
+    // Main central chassis box
+    const centerGeom = new THREE.BoxGeometry(16, 4.5, 32);
+    const centerMesh = new THREE.Mesh(centerGeom, bodyMat);
+    centerMesh.position.y = 3.2;
+    carGroup.add(centerMesh);
+
+    // Front Slanted Hood (Aerodynamic look)
+    const hoodGeom = new THREE.BoxGeometry(15.2, 2.5, 12);
     const hoodMesh = new THREE.Mesh(hoodGeom, bodyMat);
-    hoodMesh.position.set(0, 2.5, -12);
-    hoodMesh.rotation.x = -0.15;
+    hoodMesh.position.set(0, 2.2, -12);
+    hoodMesh.rotation.x = -0.16; // Slanted hood
     carGroup.add(hoodMesh);
 
-    // 2. Cockpit Canopy (Glass)
-    const glassGeom = new THREE.BoxGeometry(12, 4.5, 12);
-    const glassMat = new THREE.MeshStandardMaterial({
-        color: 0x05040a,
-        roughness: 0.05,
-        transparent: true,
-        opacity: 0.8
-    });
-    const glassMesh = new THREE.Mesh(glassGeom, glassMat);
-    glassMesh.position.set(0, 6.5, 0);
-    glassMesh.rotation.x = -0.1;
-    carGroup.add(glassMesh);
+    // Side doors/Skirt panels (aerodynamic side panels)
+    const skirtGeom = new THREE.BoxGeometry(17.5, 3.5, 24);
+    const skirtMesh = new THREE.Mesh(skirtGeom, bodyMat);
+    skirtMesh.position.set(0, 2.8, 0);
+    carGroup.add(skirtMesh);
 
-    // Windshield frame glow strip
-    const frameGeom = new THREE.BoxGeometry(12.5, 0.5, 0.5);
+    // 2. Cockpit Canopy (Windshield & Roof)
+    const cabinGeom = new THREE.BoxGeometry(11.5, 4.2, 14);
+    const cabinMat = new THREE.MeshStandardMaterial({
+        color: 0x05040a,
+        roughness: 0.02,
+        transparent: true,
+        opacity: 0.85
+    });
+    const cabinMesh = new THREE.Mesh(cabinGeom, cabinMat);
+    cabinMesh.position.set(0, 6.5, 1);
+    cabinMesh.rotation.x = -0.12;
+    carGroup.add(cabinMesh);
+
+    // Glowing Neon Edge Contours along the cabin frame
     const glowMat = new THREE.MeshStandardMaterial({
         color: mainColor,
         emissive: mainColor,
-        emissiveIntensity: 1.5
+        emissiveIntensity: 2.2
     });
-    const frameGlow = new THREE.Mesh(frameGeom, glowMat);
-    frameGlow.position.set(0, 6.6, -6.1);
-    carGroup.add(frameGlow);
+    
+    // Windshield top bar glow
+    const windshieldBarGeom = new THREE.BoxGeometry(11.6, 0.4, 0.4);
+    const windshieldBar = new THREE.Mesh(windshieldBarGeom, glowMat);
+    windshieldBar.position.set(0, 6.7, -6.1);
+    carGroup.add(windshieldBar);
 
-    // 3. Wheels (Cylinders)
-    const wheelGeom = new THREE.CylinderGeometry(4.5, 4.5, 3, 16);
-    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.5 });
-    wheelGeom.rotateZ(Math.PI / 2); // rotate cylinder
+    // 3. Rear Spoiler (Wing) for aerodynamic sports look
+    const spoilerStrutGeom = new THREE.BoxGeometry(1.2, 4, 1.2);
+    const spoilerStrutL = new THREE.Mesh(spoilerStrutGeom, bodyMat);
+    spoilerStrutL.position.set(-6.5, 6.5, 13.5);
+    spoilerStrutL.rotation.x = 0.2;
+    const spoilerStrutR = spoilerStrutL.clone();
+    spoilerStrutR.position.x = 6.5;
+    carGroup.add(spoilerStrutL);
+    carGroup.add(spoilerStrutR);
+
+    // Spoiler Wing blade
+    const wingGeom = new THREE.BoxGeometry(18.5, 0.8, 5);
+    const wingMesh = new THREE.Mesh(wingGeom, bodyMat);
+    wingMesh.position.set(0, 8.5, 14.5);
+    wingMesh.rotation.x = -0.05; // slight angle
+    carGroup.add(wingMesh);
+
+    // Glowing neon stripe on the edge of the spoiler wing
+    const wingNeonGeom = new THREE.BoxGeometry(18.7, 0.3, 0.3);
+    const wingNeon = new THREE.Mesh(wingNeonGeom, glowMat);
+    wingNeon.position.set(0, 8.5, 17.1);
+    carGroup.add(wingNeon);
+
+    // 4. Wheels with Silver Rim details
+    const tireGeom = new THREE.CylinderGeometry(4.5, 4.5, 3, 16);
+    const tireMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.6 });
+    tireGeom.rotateZ(Math.PI / 2);
+
+    const rimGeom = new THREE.CylinderGeometry(2.8, 2.8, 3.2, 12);
+    const rimMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9, roughness: 0.2 }); // Shiny silver rims
+    rimGeom.rotateZ(Math.PI / 2);
 
     const wheels = [];
     const wheelPositions = [
@@ -301,54 +336,56 @@ function create3DCar(mainColor, isPlayer = false, isPolice = false) {
         [9, 3, 9]     // Rear Right
     ];
 
-    wheelPositions.forEach((pos, idx) => {
-        const wheel = new THREE.Mesh(wheelGeom, wheelMat);
-        wheel.position.set(pos[0], pos[1], pos[2]);
-        carGroup.add(wheel);
-        wheels.push(wheel);
+    wheelPositions.forEach((pos) => {
+        // Black rubber tire
+        const tire = new THREE.Mesh(tireGeom, tireMat);
+        tire.position.set(pos[0], pos[1], pos[2]);
+        carGroup.add(tire);
+        wheels.push(tire);
 
-        // Neon Wheel Rim Glow rings
-        const rimGeom = new THREE.RingGeometry(3, 3.5, 16);
-        const rim = new THREE.Mesh(rimGeom, glowMat);
-        rim.position.set(pos[0] + (pos[0] > 0 ? 1.55 : -1.55), pos[1], pos[2]);
-        rim.rotation.y = Math.PI / 2;
+        // Shiny silver rim inside wheel hub
+        const rim = new THREE.Mesh(rimGeom, rimMat);
+        rim.position.set(pos[0] + (pos[0] > 0 ? 0.1 : -0.1), pos[1], pos[2]);
         carGroup.add(rim);
+
+        // Neon Wheel Rim Glow rings on outer edge
+        const rimGlowGeom = new THREE.RingGeometry(2.7, 3.1, 16);
+        const rimGlow = new THREE.Mesh(rimGlowGeom, glowMat);
+        rimGlow.position.set(pos[0] + (pos[0] > 0 ? 1.62 : -1.62), pos[1], pos[2]);
+        rimGlow.rotation.y = Math.PI / 2;
+        carGroup.add(rimGlow);
     });
 
-    // Save wheels reference for rotation animation
     carGroup.userData = { wheels: wheels };
 
-    // 4. Glowing lights
+    // 5. Glowing lights (Fitted to backs/fronts)
     if (isPlayer) {
-        // Cyan Headlights
-        const headGeom = new THREE.BoxGeometry(3, 1, 1);
-        const headMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 2 });
+        // Front White xenon headlights
+        const headGeom = new THREE.BoxGeometry(3, 0.8, 1);
+        const headMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 2.5 });
         const headL = new THREE.Mesh(headGeom, headMat);
-        headL.position.set(-5, 2.5, -17);
+        headL.position.set(-5, 2.5, -17.5);
         const headR = headL.clone();
         headR.position.x = 5;
         carGroup.add(headL);
         carGroup.add(headR);
 
-        // Red Taillights
-        const tailGeom = new THREE.BoxGeometry(4, 1, 1);
-        const tailMat = new THREE.MeshStandardMaterial({ color: 0xff0033, emissive: 0xff0033, emissiveIntensity: 2 });
-        const tailL = new THREE.Mesh(tailGeom, tailMat);
-        tailL.position.set(-5, 3.5, 15);
-        const tailR = tailL.clone();
-        tailR.position.x = 5;
-        carGroup.add(tailL);
-        carGroup.add(tailR);
+        // Bright Red LED tail strip
+        const tailGeom = new THREE.BoxGeometry(14, 0.6, 0.6);
+        const tailMat = new THREE.MeshStandardMaterial({ color: 0xff0033, emissive: 0xff0033, emissiveIntensity: 3.5 });
+        const tailLight = new THREE.Mesh(tailGeom, tailMat);
+        tailLight.position.set(0, 3.8, 16.1);
+        carGroup.add(tailLight);
     } else if (isPolice) {
-        // Red / Blue Flashing police siren bar on top
-        const sirenGeom = new THREE.BoxGeometry(6, 1.2, 2);
-        const redSirenMat = new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 2 });
-        const blueSirenMat = new THREE.MeshStandardMaterial({ color: 0x0000ff, emissive: 0x0000ff, emissiveIntensity: 2 });
+        // Red / Blue Flashing police siren bar on top of cabin
+        const sirenGeom = new THREE.BoxGeometry(5, 1.0, 1.8);
+        const redSirenMat = new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 3.0 });
+        const blueSirenMat = new THREE.MeshStandardMaterial({ color: 0x0000ff, emissive: 0x0000ff, emissiveIntensity: 3.0 });
         
         const sirenL = new THREE.Mesh(sirenGeom, redSirenMat);
-        sirenL.position.set(-3, 8.8, 0);
+        sirenL.position.set(-2.5, 8.6, 1.0);
         const sirenR = new THREE.Mesh(sirenGeom, blueSirenMat);
-        sirenR.position.set(3, 8.8, 0);
+        sirenR.position.set(2.5, 8.6, 1.0);
         
         carGroup.add(sirenL);
         carGroup.add(sirenR);
@@ -356,16 +393,44 @@ function create3DCar(mainColor, isPlayer = false, isPolice = false) {
         carGroup.userData.sirenL = sirenL;
         carGroup.userData.sirenR = sirenR;
         carGroup.userData.isPolice = true;
+
+        // Glowing blue under-glow for police
+        const copGlowLight = new THREE.PointLight(0x0000ff, 2.5, 30);
+        copGlowLight.position.set(0, -1, 0);
+        carGroup.add(copGlowLight);
+
+        // Standard taillights for visibility
+        const tailGeom = new THREE.BoxGeometry(12, 0.6, 0.6);
+        const tailMat = new THREE.MeshStandardMaterial({ color: 0xff0033, emissive: 0xff0033, emissiveIntensity: 3.0 });
+        const tailLight = new THREE.Mesh(tailGeom, tailMat);
+        tailLight.position.set(0, 3.8, 16.1);
+        carGroup.add(tailLight);
     } else {
-        // Standard Red taillights for obstacles
-        const tailGeom = new THREE.BoxGeometry(3, 0.8, 1);
-        const tailMat = new THREE.MeshStandardMaterial({ color: 0xff0033, emissive: 0xff0033, emissiveIntensity: 1.5 });
+        // IMPORTANT: Bright glowing taillights & License plate so other cars are extremely visible in the dark!
+        const tailGeom = new THREE.BoxGeometry(4, 0.8, 0.6);
+        const tailMat = new THREE.MeshStandardMaterial({ color: 0xff0033, emissive: 0xff0033, emissiveIntensity: 4.0 }); // Very high intensity
         const tailL = new THREE.Mesh(tailGeom, tailMat);
-        tailL.position.set(-5, 3.5, 15.1);
+        tailL.position.set(-5, 3.6, 16.1);
         const tailR = tailL.clone();
         tailR.position.x = 5;
         carGroup.add(tailL);
         carGroup.add(tailR);
+
+        // Neon contour lines on the back bumper of obstacle cars so they stand out
+        const bumperNeonGeom = new THREE.BoxGeometry(14, 0.4, 0.4);
+        const bumperNeon = new THREE.Mesh(bumperNeonGeom, glowMat);
+        bumperNeon.position.set(0, 1.8, 16.1);
+        carGroup.add(bumperNeon);
+
+        // Highlight headlights of enemy cars (pointing forward, casts subtle ambient glow)
+        const enemyHeadGeom = new THREE.BoxGeometry(3, 0.8, 1);
+        const enemyHeadMat = new THREE.MeshStandardMaterial({ color: 0xffea00, emissive: 0xffea00, emissiveIntensity: 2.0 });
+        const enemyHeadL = new THREE.Mesh(enemyHeadGeom, enemyHeadMat);
+        enemyHeadL.position.set(-5, 2.5, -17.5);
+        const enemyHeadR = enemyHeadL.clone();
+        enemyHeadR.position.x = 5;
+        carGroup.add(enemyHeadL);
+        carGroup.add(enemyHeadR);
     }
 
     return carGroup;
@@ -375,7 +440,6 @@ function create3DCar(mainColor, isPlayer = false, isPolice = false) {
 function create3DPowerup() {
     const group = new THREE.Group();
     
-    // Construct bolt shape out of two pyramids/tetrahedrons
     const geom1 = new THREE.ConeGeometry(4, 12, 4);
     const mat = new THREE.MeshStandardMaterial({
         color: COLOR_CYAN,
@@ -403,7 +467,9 @@ function create3DPowerup() {
 function initThree() {
     // 1. Create Scene
     scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x05040a, 0.0035); // fog fade in the distance
+    
+    // REDUCED FOG DENSITY (0.002 instead of 0.0035) to allow visibility of cars at the horizon
+    scene.fog = new THREE.FogExp2(0x05040a, 0.002); 
 
     // 2. Create Camera
     camera = new THREE.PerspectiveCamera(60, canvas.clientWidth / canvas.clientHeight, 1, 1000);
@@ -411,15 +477,21 @@ function initThree() {
     // 3. Create WebGL Renderer
     renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
     renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit DPR for performance
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-    // 4. Lights
-    const ambientLight = new THREE.AmbientLight(0x402b80, 0.6); // Deep violet background ambient
+    // 4. BRIGHTER SCENE LIGHTING (Ambient increased from 0.6 to 0.95, lighter indigo color)
+    const ambientLight = new THREE.AmbientLight(0x5a4a9b, 0.95); 
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    dirLight.position.set(0, 100, -50);
+    // Directional light positioned behind the camera to light up the backs of traffic cars clearly
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.4); 
+    dirLight.position.set(0, 120, 150); // angled slightly from behind/above
     scene.add(dirLight);
+
+    // Extra fill light from the front
+    const fillLight = new THREE.DirectionalLight(COLOR_PURPLE, 0.4);
+    fillLight.position.set(0, 50, -400);
+    scene.add(fillLight);
 
     // 5. Build 3D Road Mesh
     createRoadMesh();
@@ -429,14 +501,13 @@ function initThree() {
     scene.add(playerCar);
 
     // Under-glow point light for player car
-    const playerGlowLight = new THREE.PointLight(COLOR_CYAN, 2, 45);
+    const playerGlowLight = new THREE.PointLight(COLOR_CYAN, 2.5, 45);
     playerGlowLight.position.set(0, -2, 0);
     playerCar.add(playerGlowLight);
 }
 
 // Procedural highway meshes
 function createRoadMesh() {
-    // Road asphalt plane
     const roadGeom = new THREE.PlaneGeometry(ROAD_WIDTH, 1200);
     const roadMat = new THREE.MeshStandardMaterial({ color: 0x07060b, roughness: 0.6 });
     const road = new THREE.Mesh(roadGeom, roadMat);
@@ -444,15 +515,13 @@ function createRoadMesh() {
     road.position.set(0, 0, -500);
     scene.add(road);
 
-    // Dynamic Dashed Lane dividers (moving)
     const laneGeom = new THREE.BoxGeometry(1.5, 0.1, 15);
     const laneMat = new THREE.MeshStandardMaterial({
         color: COLOR_CYAN,
         emissive: COLOR_CYAN,
-        emissiveIntensity: 1.0
+        emissiveIntensity: 1.2
     });
 
-    // Dynamic Pink barriers on the side
     const barrierGeom = new THREE.BoxGeometry(2, 4, 1200);
     const barrierMat = new THREE.MeshStandardMaterial({
         color: COLOR_PINK,
@@ -468,9 +537,6 @@ function createRoadMesh() {
     rightBarrier.position.x = ROAD_WIDTH / 2 + 1;
     scene.add(rightBarrier);
 
-    // Create pooled dynamic items that move backward (lane lines, barrier light bars)
-    // Dashed lines between lanes (Lanes are at X: -40, 0, 40)
-    // Lines drawn at X: -20, 20
     const lineXPositions = [-LANE_WIDTH / 2, LANE_WIDTH / 2];
     
     for (let z = 0; z > -1000; z -= 80) {
@@ -481,7 +547,6 @@ function createRoadMesh() {
             roadSegments.push(laneLine);
         });
 
-        // Running lights on barriers
         const sideLightGeom = new THREE.BoxGeometry(0.5, 1, 10);
         const sideLightMat = new THREE.MeshStandardMaterial({
             color: 0xffffff,
@@ -501,7 +566,7 @@ function createRoadMesh() {
     }
 }
 
-// High-performance Particle Explosions
+// Particle System
 class ThreeParticle {
     constructor(x, y, z, color) {
         const geom = new THREE.SphereGeometry(Math.random() * 1.5 + 0.5, 4, 4);
@@ -574,7 +639,6 @@ function moveLane(direction) {
     playerCar.userData.targetX = lanesX[currentLaneIndex];
 }
 
-// Start / Restart Actions
 startBtn.addEventListener('click', startGame);
 restartBtn.addEventListener('click', startGame);
 audioToggle.addEventListener('click', () => audio.toggleMute());
@@ -582,7 +646,6 @@ audioToggle.addEventListener('click', () => audio.toggleMute());
 function startGame() {
     audio.init();
     
-    // Reset state
     gameState = 'PLAYING';
     score = 0;
     speed = 40;
@@ -593,19 +656,16 @@ function startGame() {
     playerCar.userData.targetX = lanesX[currentLaneIndex];
     playerCar.rotation.set(0, 0, 0);
 
-    // Clean old obstacles
     obstacles.forEach(obs => {
         scene.remove(obs);
     });
     obstacles = [];
 
-    // Clean old powerups
     powerups.forEach(p => {
         scene.remove(p);
     });
     powerups = [];
 
-    // Clean old particles
     particles.forEach(p => {
         scene.remove(p.mesh);
         p.mesh.geometry.dispose();
@@ -626,12 +686,11 @@ function startGame() {
 
 function gameOver() {
     gameState = 'GAMEOVER';
-    cameraShake = 35; // Trigger camera shake
+    cameraShake = 35;
     audio.stopEngine();
     audio.stopBGM();
     audio.playCrashSound();
 
-    // Spin car out dynamically on crash
     playerCar.rotation.y = Math.PI / 4;
     playerCar.rotation.z = Math.PI / 8;
 
@@ -651,13 +710,11 @@ function gameLoop() {
     frameCount++;
 
     if (gameState === 'PLAYING') {
-        // --- Speed Controls ---
         if (boostTimer > 0) {
             boostTimer--;
-            speed = 145; // Max nos speed
+            speed = 145;
             targetSpeed = 145;
             
-            // Spawn exhaust spark particles
             if (frameCount % 2 === 0) {
                 particles.push(new ThreeParticle(playerCar.position.x - 5, 2, playerCar.position.z + 15, COLOR_CYAN));
                 particles.push(new ThreeParticle(playerCar.position.x + 5, 2, playerCar.position.z + 15, COLOR_CYAN));
@@ -669,47 +726,41 @@ function gameLoop() {
                 speed -= 0.2;
             }
 
-            // Slowly scale difficulty
             if (frameCount % 600 === 0) {
                 targetSpeed = Math.min(125, targetSpeed + 5);
-                audio.playPointSound(); // Milestone ping
+                audio.playPointSound();
             }
         }
 
-        // Display HUD metrics
         score = Math.floor(frameCount / 8);
-        if (boostTimer > 0) score += Math.floor(frameCount / 4); // Boost bonus points
+        if (boostTimer > 0) score += Math.floor(frameCount / 4);
         scoreVal.innerText = String(score).padStart(4, '0');
         speedVal.innerText = `${Math.floor(speed)} km/h`;
 
-        // Engine Pitch
         audio.setEngineSpeed(speed / 145);
 
-        // --- Player Movement & Tilt ---
+        // Player movement
         const diffX = playerCar.userData.targetX - playerCar.position.x;
         playerCar.position.x += diffX * 0.14;
         
-        // Dynamically tilt the car group during lane switches (adds realism!)
         playerCar.rotation.y = -diffX * 0.02;
         playerCar.rotation.z = diffX * 0.03;
 
-        // Rotate wheels based on scrolling speed
         if (playerCar.userData.wheels) {
             playerCar.userData.wheels.forEach(wheel => {
                 wheel.rotation.x -= speed * 0.003;
             });
         }
 
-        // --- Scrolling Road segments & Lights ---
-        // Scroll lane dividers toward player (positive Z)
+        // Scroll lanes
         roadSegments.forEach(segment => {
             segment.position.z += speed * 0.15;
             if (segment.position.z > 50) {
-                segment.position.z = -900; // Reset to horizon
+                segment.position.z = -900;
             }
         });
 
-        // Scroll barrier running lights
+        // Scroll barrier lights
         lightsPool.forEach(light => {
             light.position.z += speed * 0.15;
             if (light.position.z > 50) {
@@ -717,7 +768,7 @@ function gameLoop() {
             }
         });
 
-        // --- Spawning Obstacle Cars ---
+        // Spawn Obstacles
         const spawnInterval = Math.max(50, 130 - Math.floor(speed * 0.6));
         if (frameCount % spawnInterval === 0) {
             const laneIndex = Math.floor(Math.random() * lanesX.length);
@@ -728,19 +779,22 @@ function gameLoop() {
             const randomColor = colors[Math.floor(Math.random() * colors.length)];
             
             const obs = create3DCar(isPolice ? 0x0f0e15 : randomColor, false, isPolice);
-            obs.position.set(obsX, 0, -800); // spawn far away
+            obs.position.set(obsX, 0, -800);
             
-            // Relative speed (slower than player)
             obs.userData = { 
                 speedZ: (speed * 0.08) + Math.random() * 2 + 1,
-                colorHex: isPolice ? COLOR_PINK : randomColor
+                colorHex: isPolice ? COLOR_PINK : randomColor,
+                isPolice: isPolice,
+                sirenL: obs.userData.sirenL,
+                sirenR: obs.userData.sirenR,
+                wheels: obs.userData.wheels
             };
             
             scene.add(obs);
             obstacles.push(obs);
         }
 
-        // --- Spawning Boost Powerups ---
+        // Spawn Powerups
         if (frameCount % 500 === 0 && boostTimer === 0) {
             const laneIndex = Math.floor(Math.random() * lanesX.length);
             const p = create3DPowerup();
@@ -749,12 +803,10 @@ function gameLoop() {
             powerups.push(p);
         }
 
-        // --- Update Powerups ---
+        // Update Powerups
         for (let i = powerups.length - 1; i >= 0; i--) {
             const p = powerups[i];
-            p.position.z += speed * 0.15; // Move down with road speed
-            
-            // Rotate powerup
+            p.position.z += speed * 0.15;
             p.rotation.y += 0.05;
 
             if (p.position.z > 50) {
@@ -763,10 +815,9 @@ function gameLoop() {
                 continue;
             }
 
-            // Collision Check (Distance based)
             const dist = p.position.distanceTo(playerCar.position);
             if (dist < 22) {
-                boostTimer = 180; // 3 seconds nos
+                boostTimer = 180;
                 audio.playBoostSound();
                 spawn3DExplosion(p.position.x, p.position.y + 4, p.position.z, COLOR_CYAN);
                 scene.remove(p);
@@ -774,25 +825,24 @@ function gameLoop() {
             }
         }
 
-        // --- Update Obstacles ---
+        // Update Obstacles
         for (let i = obstacles.length - 1; i >= 0; i--) {
             const obs = obstacles[i];
-            
-            // Move relative to player speed
             obs.position.z += obs.userData.speedZ;
 
-            // Rotate wheels
             if (obs.userData.wheels) {
                 obs.userData.wheels.forEach(wheel => {
                     wheel.rotation.x -= obs.userData.speedZ * 0.05;
                 });
             }
 
-            // Police flashing siren logic
+            // Flashing police siren bar
             if (obs.userData.isPolice && frameCount % 6 === 0) {
                 const flash = Math.floor(frameCount / 6) % 2 === 0;
-                obs.userData.sirenL.material.emissiveIntensity = flash ? 3 : 0.2;
-                obs.userData.sirenR.material.emissiveIntensity = flash ? 0.2 : 3;
+                if (obs.userData.sirenL && obs.userData.sirenR) {
+                    obs.userData.sirenL.material.emissiveIntensity = flash ? 3 : 0.2;
+                    obs.userData.sirenR.material.emissiveIntensity = flash ? 0.2 : 3;
+                }
             }
 
             if (obs.position.z > 100) {
@@ -801,24 +851,21 @@ function gameLoop() {
                 continue;
             }
 
-            // 3D Collision Detection (Box vs Box intersection)
+            // AABB Collision
             const playerBox = new THREE.Box3().setFromObject(playerCar);
             const obsBox = new THREE.Box3().setFromObject(obs);
             
-            // Shrink boxes slightly for fair collision physics
             playerBox.expandByScalar(-1.5);
             obsBox.expandByScalar(-1.5);
 
             if (playerBox.intersectsBox(obsBox)) {
                 if (boostTimer > 0) {
-                    // Destroy obstacle during active boost
                     spawn3DExplosion(obs.position.x, obs.position.y + 3, obs.position.z, obs.userData.colorHex);
                     audio.playCrashSound();
                     cameraShake = 10;
                     scene.remove(obs);
                     obstacles.splice(i, 1);
                 } else {
-                    // Normal Game Over Crash
                     spawn3DExplosion(playerCar.position.x, playerCar.position.y + 3, playerCar.position.z, COLOR_CYAN);
                     spawn3DExplosion(obs.position.x, obs.position.y + 3, obs.position.z, obs.userData.colorHex);
                     gameOver();
@@ -827,7 +874,6 @@ function gameLoop() {
         }
 
     } else {
-        // Idle state road scroll
         roadSegments.forEach(segment => {
             segment.position.z += 1.5;
             if (segment.position.z > 50) segment.position.z = -900;
@@ -841,7 +887,6 @@ function gameLoop() {
         });
     }
 
-    // --- Update Particles ---
     for (let i = particles.length - 1; i >= 0; i--) {
         const active = particles[i].update();
         if (!active) {
@@ -849,43 +894,37 @@ function gameLoop() {
         }
     }
 
-    // --- Dynamic Tracking Camera Physics ---
+    // Camera follow
     if (gameState === 'PLAYING') {
-        // Smooth target follow
         const targetCamX = playerCar.position.x * 0.6;
         camera.position.x = THREE.MathUtils.lerp(camera.position.x, targetCamX, 0.05);
         
-        // Boost changes FOV (Zoom stretch effect)
         const targetFov = boostTimer > 0 ? 74 : 60;
         if (Math.abs(camera.fov - targetFov) > 0.1) {
             camera.fov = THREE.MathUtils.lerp(camera.fov, targetFov, 0.08);
             camera.updateProjectionMatrix();
         }
 
-        // Standard height and depth relative to player car
         camera.position.y = 26;
         camera.position.z = playerCar.position.z + 46;
         camera.lookAt(playerCar.position.x * 0.8, playerCar.position.y + 4, playerCar.position.z - 25);
     } else if (gameState === 'START') {
-        // Cinematic panning angle on start menu
         camera.position.set(0, 30, 60);
         camera.lookAt(0, 5, -10);
     }
 
-    // Apply Screen Shake if active (panning the camera by offsets)
     if (cameraShake > 0) {
         camera.position.x += (Math.random() - 0.5) * cameraShake * 0.15;
         camera.position.y += (Math.random() - 0.5) * cameraShake * 0.15;
-        cameraShake *= 0.9; // decay
+        cameraShake *= 0.9;
         if (cameraShake < 0.1) cameraShake = 0;
     }
 
-    // 7. Render frame
     renderer.render(scene, camera);
     requestAnimationFrame(gameLoop);
 }
 
-// Window resize handler
+// Window resize
 window.addEventListener('resize', () => {
     if (camera && renderer) {
         camera.aspect = canvas.clientWidth / canvas.clientHeight;
@@ -894,6 +933,6 @@ window.addEventListener('resize', () => {
     }
 });
 
-// Setup and start loop
+// Setup
 initThree();
 requestAnimationFrame(gameLoop);
