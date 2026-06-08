@@ -1,7 +1,30 @@
-// Retro-Neon Car Racing Game Logic - UPGRADED EDITION
+// Retro-Neon Car Racing Game Logic - 4K ULTRA SHARP EDITION
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+
+// Logical coordinates for game geometry
+const LOGICAL_WIDTH = 450;
+const LOGICAL_HEIGHT = 650;
+
+// High-DPI / 4K Scaling logic
+function resizeCanvas() {
+    const cssWidth = canvas.clientWidth;
+    const cssHeight = canvas.clientHeight;
+    const dpr = window.devicePixelRatio || 1;
+    
+    // Set internal canvas resolution scaled by Device Pixel Ratio
+    canvas.width = cssWidth * dpr;
+    canvas.height = cssHeight * dpr;
+    
+    // Scale drawings so game logic can always draw in a 450x650 virtual grid
+    ctx.setTransform(1, 0, 0, 1, 0, 0); // reset
+    ctx.scale((cssWidth * dpr) / LOGICAL_WIDTH, (cssHeight * dpr) / LOGICAL_HEIGHT);
+}
+
+// Attach listener and trigger immediately
+window.addEventListener('resize', resizeCanvas);
+setTimeout(resizeCanvas, 0);
 
 // DOM Elements
 const startScreen = document.getElementById('startScreen');
@@ -18,7 +41,7 @@ const rightBtn = document.getElementById('rightBtn');
 const audioToggle = document.getElementById('audioToggle');
 
 // Game State & Config
-let gameState = 'START'; // START, PLAYING, GAMEOVER
+let gameState = 'START';
 let score = 0;
 let highScore = localStorage.getItem('neon_drift_highscore') || 0;
 let speed = 0;
@@ -26,12 +49,11 @@ let targetSpeed = 0;
 let roadOffset = 0;
 let frameCount = 0;
 let shakeDuration = 0;
-let boostTimer = 0; // If > 0, player has speed boost
+let boostTimer = 0;
 
-// Update High Score Display
 highScoreVal.innerText = String(highScore).padStart(4, '0');
 
-// Audio Controller using Web Audio API
+// Audio Controller (Web Audio API Synthesizer)
 class AudioSynth {
     constructor() {
         this.ctx = null;
@@ -51,14 +73,13 @@ class AudioSynth {
             this.initialized = true;
             this.playBGM();
         } catch (e) {
-            console.warn('Web Audio API not supported in this browser', e);
+            console.warn('Web Audio API not supported', e);
         }
     }
 
     setupEngine() {
         if (!this.ctx) return;
         
-        // Create engine sound using a saw wave oscillator combined with a lowpass filter
         this.engineOsc = this.ctx.createOscillator();
         this.engineOsc.type = 'sawtooth';
         this.engineOsc.frequency.setValueAtTime(40, this.ctx.currentTime);
@@ -78,15 +99,12 @@ class AudioSynth {
 
     setEngineSpeed(speedRatio) {
         if (this.muted || !this.initialized || !this.engineOsc) return;
-        
         if (this.ctx.state === 'suspended') {
             this.ctx.resume();
         }
-
         const baseFreq = 35;
         const maxFreq = 120;
         const targetFreq = baseFreq + (speedRatio * (maxFreq - baseFreq));
-        
         this.engineOsc.frequency.setTargetAtTime(targetFreq, this.ctx.currentTime, 0.1);
         
         const targetVolume = 0.03 + (speedRatio * 0.05);
@@ -101,10 +119,9 @@ class AudioSynth {
 
     playBGM() {
         if (this.muted || !this.initialized || !this.ctx) return;
-        if (this.bgmInterval) return; // Already playing
+        if (this.bgmInterval) return;
 
         let noteIndex = 0;
-        // Cyberpunk synthwave repeating bassline frequencies: E1, G1, A1, C2
         const notes = [41.20, 48.99, 55.00, 65.41]; 
         
         this.bgmInterval = setInterval(() => {
@@ -132,7 +149,7 @@ class AudioSynth {
             osc.stop(now + 0.4);
             
             noteIndex = (noteIndex + 1) % notes.length;
-        }, 400); // 150 BPM feel
+        }, 400);
     }
 
     stopBGM() {
@@ -144,11 +161,9 @@ class AudioSynth {
 
     playCrashSound() {
         if (this.muted || !this.initialized || !this.ctx) return;
-
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
-        
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(120, now);
         osc.frequency.exponentialRampToValueAtTime(8, now + 1.0);
@@ -163,50 +178,39 @@ class AudioSynth {
         osc.connect(filter);
         filter.connect(gain);
         gain.connect(this.ctx.destination);
-        
         osc.start(now);
         osc.stop(now + 1.0);
     }
 
     playPointSound() {
         if (this.muted || !this.initialized || !this.ctx) return;
-        
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
-        
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(523.25, now); // C5
-        osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
-        osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
-        
+        osc.frequency.setValueAtTime(523.25, now);
+        osc.frequency.setValueAtTime(659.25, now + 0.08);
+        osc.frequency.setValueAtTime(783.99, now + 0.16);
         gain.gain.setValueAtTime(0.06, now);
         gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-        
         osc.connect(gain);
         gain.connect(this.ctx.destination);
-        
         osc.start(now);
         osc.stop(now + 0.3);
     }
 
     playBoostSound() {
         if (this.muted || !this.initialized || !this.ctx) return;
-        
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
-        
         osc.type = 'sine';
         osc.frequency.setValueAtTime(200, now);
-        osc.frequency.exponentialRampToValueAtTime(1200, now + 0.4); // Swoop up sound
-        
+        osc.frequency.exponentialRampToValueAtTime(1200, now + 0.4);
         gain.gain.setValueAtTime(0.08, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-        
         osc.connect(gain);
         gain.connect(this.ctx.destination);
-        
         osc.start(now);
         osc.stop(now + 0.4);
     }
@@ -233,32 +237,29 @@ const audio = new AudioSynth();
 
 // Player Car Model
 const player = {
-    x: 225, // Start in middle lane
+    x: 225,
     y: 520,
     width: 44,
     height: 78,
     targetX: 225,
-    speedX: 0.14, // Smooth interpolation factor
+    speedX: 0.14,
     color: '#00f0ff',
     glowColor: 'rgba(0, 240, 255, 0.8)'
 };
 
-// Lane configuration
-const lanes = [125, 225, 325]; // Center X of Left, Middle, and Right lanes
+const lanes = [125, 225, 325];
 let currentLaneIndex = 1;
 
-// Obstacles and Powerups
 let obstacles = [];
 let powerups = [];
 
 const obstacleColors = [
-    { main: '#ff007f', glow: 'rgba(255, 0, 127, 0.8)' }, // Neon Pink
-    { main: '#9d00ff', glow: 'rgba(157, 0, 255, 0.8)' }, // Neon Purple
-    { main: '#ffdd00', glow: 'rgba(255, 221, 0, 0.8)' }, // Neon Yellow
-    { main: '#39ff14', glow: 'rgba(57, 255, 20, 0.8)' }  // Neon Green
+    { main: '#ff007f', glow: 'rgba(255, 0, 127, 0.8)' },
+    { main: '#9d00ff', glow: 'rgba(157, 0, 255, 0.8)' },
+    { main: '#ffdd00', glow: 'rgba(255, 221, 0, 0.8)' },
+    { main: '#39ff14', glow: 'rgba(57, 255, 20, 0.8)' }
 ];
 
-// Particle system
 let particles = [];
 function spawnExplosion(x, y, color) {
     for (let i = 0; i < 40; i++) {
@@ -290,7 +291,6 @@ function spawnBoostSparks(x, y) {
     }
 }
 
-// Input Handlers
 const keys = {};
 window.addEventListener('keydown', e => {
     keys[e.key] = true;
@@ -319,7 +319,6 @@ function moveLane(direction) {
     player.targetX = lanes[currentLaneIndex];
 }
 
-// Start Game
 startBtn.addEventListener('click', startGame);
 restartBtn.addEventListener('click', startGame);
 audioToggle.addEventListener('click', () => audio.toggleMute());
@@ -327,7 +326,6 @@ audioToggle.addEventListener('click', () => audio.toggleMute());
 function startGame() {
     audio.init();
     
-    // Reset state
     gameState = 'PLAYING';
     score = 0;
     speed = 40;
@@ -342,23 +340,20 @@ function startGame() {
     shakeDuration = 0;
     frameCount = 0;
     
-    // Hide UI overlays
     startScreen.classList.add('hidden');
     gameOverScreen.classList.add('hidden');
     
-    // Resume sound
     audio.setEngineSpeed(speed / 120);
     audio.playBGM();
 }
 
 function gameOver() {
     gameState = 'GAMEOVER';
-    shakeDuration = 25; // Trigger strong screen shake
+    shakeDuration = 25;
     audio.stopEngine();
     audio.stopBGM();
     audio.playCrashSound();
     
-    // Save High Score
     if (score > highScore) {
         highScore = score;
         localStorage.setItem('neon_drift_highscore', highScore);
@@ -369,7 +364,6 @@ function gameOver() {
     gameOverScreen.classList.remove('hidden');
 }
 
-// Collision Check
 function checkCollision(rect1, rect2) {
     const paddingX = 4;
     const paddingY = 6;
@@ -381,16 +375,12 @@ function checkCollision(rect1, rect2) {
     );
 }
 
-// Draw Car model (with flashing police siren support)
 function drawCar(x, y, width, height, colorObj, isPlayer = false, isPolice = false) {
     ctx.save();
-    
-    // Glow effect
     ctx.shadowBlur = 15;
     ctx.shadowColor = colorObj.glow || colorObj.main;
     ctx.fillStyle = colorObj.main;
     
-    // Main Car Body
     ctx.beginPath();
     ctx.moveTo(x + width * 0.25, y);
     ctx.lineTo(x + width * 0.75, y);
@@ -405,7 +395,6 @@ function drawCar(x, y, width, height, colorObj, isPlayer = false, isPolice = fal
 
     ctx.shadowBlur = 0;
 
-    // Windshield
     ctx.fillStyle = '#05040a';
     ctx.beginPath();
     ctx.moveTo(x + width * 0.3, y + height * 0.25);
@@ -422,7 +411,6 @@ function drawCar(x, y, width, height, colorObj, isPlayer = false, isPolice = fal
     ctx.lineTo(x + width * 0.65, y + height * 0.3);
     ctx.stroke();
 
-    // Wheels
     ctx.fillStyle = '#111';
     const wheelWidth = width * 0.12;
     const wheelHeight = height * 0.18;
@@ -431,22 +419,18 @@ function drawCar(x, y, width, height, colorObj, isPlayer = false, isPolice = fal
     ctx.fillRect(x - wheelWidth + 1, y + height * 0.65, wheelWidth, wheelHeight);
     ctx.fillRect(x + width - 1, y + height * 0.65, wheelWidth, wheelHeight);
 
-    // Glowing Sirens or Headlights
     if (isPlayer) {
-        // Front Lights
         ctx.fillStyle = '#fff';
         ctx.shadowBlur = 10;
         ctx.shadowColor = '#fff';
         ctx.fillRect(x + width * 0.25, y + 2, 4, 3);
         ctx.fillRect(x + width * 0.65, y + 2, 4, 3);
         
-        // Red taillights
         ctx.fillStyle = '#ff003c';
         ctx.shadowColor = '#ff003c';
         ctx.fillRect(x + width * 0.15, y + height - 5, 8, 3);
         ctx.fillRect(x + width * 0.65, y + height - 5, 8, 3);
     } else if (isPolice) {
-        // Police Flashing Siren (Red and Blue alternate every 6 frames)
         const flash = Math.floor(frameCount / 6) % 2 === 0;
         ctx.shadowBlur = 15;
         
@@ -458,13 +442,11 @@ function drawCar(x, y, width, height, colorObj, isPlayer = false, isPolice = fal
         ctx.shadowColor = ctx.fillStyle;
         ctx.fillRect(x + width * 0.5, y + height * 0.4, width * 0.3, 4);
         
-        // Front lights
         ctx.fillStyle = '#ffdd00';
         ctx.shadowColor = '#ffdd00';
         ctx.fillRect(x + width * 0.25, y + 2, 4, 3);
         ctx.fillRect(x + width * 0.65, y + 2, 4, 3);
     } else {
-        // Red taillights for normal enemy cars
         ctx.fillStyle = '#ff003c';
         ctx.shadowBlur = 8;
         ctx.shadowColor = '#ff003c';
@@ -475,14 +457,11 @@ function drawCar(x, y, width, height, colorObj, isPlayer = false, isPolice = fal
     ctx.restore();
 }
 
-// Draw glowing neon speed batteries (Powerups)
 function drawBattery(x, y) {
     ctx.save();
     ctx.shadowBlur = 15;
     ctx.shadowColor = '#00f0ff';
     ctx.fillStyle = '#00f0ff';
-    
-    // Draw neon bolt/battery shape
     ctx.beginPath();
     ctx.moveTo(x, y - 10);
     ctx.lineTo(x + 6, y - 2);
@@ -495,42 +474,42 @@ function drawBattery(x, y) {
     ctx.restore();
 }
 
-// Draw scrolling background road and details
 function drawRoad() {
+    // Asphalt base
     ctx.fillStyle = '#05040a';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
 
     // Grid details on the sides
     ctx.save();
     ctx.strokeStyle = 'rgba(157, 0, 255, 0.08)';
     ctx.lineWidth = 1;
     const gridSize = 40;
-    for (let x = 0; x < canvas.width; x += gridSize) {
+    for (let x = 0; x < LOGICAL_WIDTH; x += gridSize) {
         if (x < 75 || x > 375) {
             ctx.beginPath();
             ctx.moveTo(x, 0);
-            ctx.lineTo(x, canvas.height);
+            ctx.lineTo(x, LOGICAL_HEIGHT);
             ctx.stroke();
         }
     }
     const gridOffset = roadOffset % gridSize;
-    for (let y = gridOffset; y < canvas.height; y += gridSize) {
+    for (let y = gridOffset; y < LOGICAL_HEIGHT; y += gridSize) {
         ctx.beginPath();
         ctx.moveTo(0, y);
         ctx.lineTo(75, y);
         ctx.stroke();
         ctx.beginPath();
         ctx.moveTo(375, y);
-        ctx.lineTo(canvas.width, y);
+        ctx.lineTo(LOGICAL_WIDTH, y);
         ctx.stroke();
     }
     ctx.restore();
 
-    // Asphalt fill
+    // Road asphalt fill
     ctx.fillStyle = '#08070d';
-    ctx.fillRect(75, 0, 300, canvas.height);
+    ctx.fillRect(75, 0, 300, LOGICAL_HEIGHT);
 
-    // Neon Pink side barriers with shadow glow
+    // Neon Pink side barriers
     ctx.save();
     ctx.shadowBlur = 12;
     ctx.shadowColor = 'var(--neon-pink)';
@@ -538,9 +517,9 @@ function drawRoad() {
     ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.moveTo(75, 0);
-    ctx.lineTo(75, canvas.height);
+    ctx.lineTo(75, LOGICAL_HEIGHT);
     ctx.moveTo(375, 0);
-    ctx.lineTo(375, canvas.height);
+    ctx.lineTo(375, LOGICAL_HEIGHT);
     ctx.stroke();
     ctx.restore();
 
@@ -551,7 +530,7 @@ function drawRoad() {
     ctx.shadowColor = '#fff';
     const barrierDashes = 100;
     const dashOffset = roadOffset % barrierDashes;
-    for (let y = dashOffset - barrierDashes; y < canvas.height; y += barrierDashes) {
+    for (let y = dashOffset - barrierDashes; y < LOGICAL_HEIGHT; y += barrierDashes) {
         ctx.fillRect(73, y, 4, 15);
         ctx.fillRect(373, y, 4, 15);
     }
@@ -561,7 +540,7 @@ function drawRoad() {
     if (boostTimer > 0) {
         ctx.fillStyle = 'rgba(0, 240, 255, 0.15)';
         for (let i = 0; i < 6; i++) {
-            const lineY = (roadOffset * 2.5 + i * 150) % canvas.height;
+            const lineY = (roadOffset * 2.5 + i * 150) % LOGICAL_HEIGHT;
             const lineX = 90 + (i * 45) % 260;
             ctx.fillRect(lineX, lineY, 2, 40);
         }
@@ -575,14 +554,13 @@ function drawRoad() {
     ctx.lineDashOffset = -roadOffset;
     ctx.beginPath();
     ctx.moveTo(175, 0);
-    ctx.lineTo(175, canvas.height);
+    ctx.lineTo(175, LOGICAL_HEIGHT);
     ctx.moveTo(275, 0);
-    ctx.lineTo(275, canvas.height);
+    ctx.lineTo(275, LOGICAL_HEIGHT);
     ctx.stroke();
     ctx.restore();
 }
 
-// Particle update and render
 function updateAndDrawParticles() {
     for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
@@ -607,11 +585,9 @@ function updateAndDrawParticles() {
     }
 }
 
-// Main Game Update/Draw loop
 function update(time) {
     frameCount++;
     
-    // Save state for screen shake effect
     ctx.save();
     if (shakeDuration > 0) {
         const dx = (Math.random() - 0.5) * 8;
@@ -623,59 +599,50 @@ function update(time) {
     drawRoad();
     
     if (gameState === 'PLAYING') {
-        // Boost timer logic
         if (boostTimer > 0) {
             boostTimer--;
-            speed = 135; // Maximum speed
+            speed = 135;
             targetSpeed = 135;
-            // Spawn sparks under the wheels during boost
             if (frameCount % 2 === 0) {
                 spawnBoostSparks(player.x + 5, player.y + player.height);
                 spawnBoostSparks(player.x + player.width - 5, player.y + player.height);
             }
         } else {
-            // Standard acceleration logic
             if (speed < targetSpeed) {
                 speed += 0.2;
             } else if (speed > targetSpeed) {
                 speed -= 0.15;
             }
 
-            // Slowly scale difficulty
             if (frameCount % 600 === 0) {
                 targetSpeed = Math.min(115, targetSpeed + 5);
-                audio.playPointSound(); // Milestone score ping
+                audio.playPointSound();
             }
         }
 
-        // Scroll the road
         roadOffset += speed * 0.15;
         
-        // Display HUD metrics
         score = Math.floor(frameCount / 8);
         if (boostTimer > 0) {
-            score += Math.floor(frameCount / 4); // Extra score during boost!
+            score += Math.floor(frameCount / 4);
         }
         scoreVal.innerText = String(score).padStart(4, '0');
         speedVal.innerText = `${Math.floor(speed)} km/h`;
         
-        // Dynamic engine pitch
         audio.setEngineSpeed(speed / 135);
 
-        // Smooth steering interpolation
         const diffX = player.targetX - (player.x + player.width / 2);
         player.x += diffX * player.speedX;
 
-        // --- Obstacle Spawning ---
+        // Obstacles
         const spawnInterval = Math.max(45, 130 - Math.floor(speed * 0.7));
         if (frameCount % spawnInterval === 0) {
             const randomLaneIndex = Math.floor(Math.random() * lanes.length);
             const laneX = lanes[randomLaneIndex] - player.width / 2;
             
-            // 20% chance to spawn a police car with sirens, 80% normal car
             const isPoliceCar = Math.random() < 0.20;
             const randomColor = isPoliceCar 
-                ? { main: '#08070d', glow: 'rgba(0, 240, 255, 0.4)' } // Black/cyberpunk chassis
+                ? { main: '#08070d', glow: 'rgba(0, 240, 255, 0.4)' }
                 : obstacleColors[Math.floor(Math.random() * obstacleColors.length)];
             
             const obsSpeed = (speed * 0.08) + Math.random() * 2 + 1;
@@ -691,10 +658,8 @@ function update(time) {
             });
         }
 
-        // --- Powerup Spawning ---
-        // Spawn a boost battery roughly once every 450 frames
+        // Powerups
         if (frameCount % 450 === 0 && boostTimer === 0) {
-            // Pick a lane different from the obstacles if possible, or random
             const randomLaneIndex = Math.floor(Math.random() * lanes.length);
             powerups.push({
                 x: lanes[randomLaneIndex],
@@ -704,55 +669,47 @@ function update(time) {
             });
         }
 
-        // --- Update and Draw Powerups ---
+        // Update Powerups
         for (let i = powerups.length - 1; i >= 0; i--) {
             const p = powerups[i];
-            p.y += speed * 0.15; // Moves relative to the road speed
+            p.y += speed * 0.15;
 
-            if (p.y > canvas.height + 50) {
+            if (p.y > LOGICAL_HEIGHT + 50) {
                 powerups.splice(i, 1);
                 continue;
             }
 
             drawBattery(p.x, p.y);
 
-            // Collision with player
-            const playerRect = { x: player.x, y: player.y, width: player.width, height: player.height };
-            // Simple distance check for battery
             const dist = Math.hypot((player.x + player.width / 2) - p.x, (player.y + player.height / 2) - p.y);
             if (dist < 40) {
-                // Trigger boost
-                boostTimer = 180; // 3 seconds of boost at 60fps
+                boostTimer = 180;
                 audio.playBoostSound();
                 spawnExplosion(p.x, p.y, '#00f0ff');
                 powerups.splice(i, 1);
             }
         }
 
-        // --- Update and Draw Obstacles ---
+        // Update Obstacles
         for (let i = obstacles.length - 1; i >= 0; i--) {
             const obs = obstacles[i];
             obs.y += obs.speedY;
 
-            if (obs.y > canvas.height + 50) {
+            if (obs.y > LOGICAL_HEIGHT + 50) {
                 obstacles.splice(i, 1);
                 continue;
             }
 
-            // Draw obstacle
             drawCar(obs.x, obs.y, obs.width, obs.height, obs.color, false, obs.isPolice);
 
-            // Collision Check
             const playerRect = { x: player.x, y: player.y, width: player.width, height: player.height };
             if (checkCollision(playerRect, obs)) {
-                // If player is boosting, destroy the obstacle instead of dying! (Super fun mechanic)
                 if (boostTimer > 0) {
                     spawnExplosion(obs.x + obs.width / 2, obs.y + obs.height / 2, obs.color.main || '#ff007f');
                     audio.playCrashSound();
-                    shakeDuration = 8; // Small shake
+                    shakeDuration = 8;
                     obstacles.splice(i, 1);
                 } else {
-                    // Normal crash
                     spawnExplosion(player.x + player.width / 2, player.y + player.height / 2, player.color);
                     spawnExplosion(obs.x + obs.width / 2, obs.y + obs.height / 2, obs.color.main);
                     gameOver();
@@ -779,7 +736,6 @@ function update(time) {
             });
         }
     } else {
-        // Idle state scrolling
         roadOffset += 1.5;
         for (let obs of obstacles) {
             obs.y += obs.speedY * 0.1;
@@ -791,14 +747,11 @@ function update(time) {
         }
     }
 
-    // Render particles
     updateAndDrawParticles();
     
-    // Restore state from screen shake
     ctx.restore();
 
     requestAnimationFrame(update);
 }
 
-// Initial draw call
 requestAnimationFrame(update);
