@@ -1,0 +1,317 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Orbitron:wght@500;800;900&display=swap');
+
+:root {
+    --bg-color: #080711;
+    --neon-pink: #ff007f;
+    --neon-blue: #00f0ff;
+    --neon-purple: #9d00ff;
+    --text-color: #ffffff;
+    --glass-bg: rgba(13, 12, 33, 0.7);
+    --glass-border: rgba(255, 0, 127, 0.2);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Background grid effect */
+body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(rgba(157, 0, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(157, 0, 255, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+    z-index: -2;
+}
+
+/* Cyberpunk horizon sun */
+.neon-sun {
+    position: absolute;
+    bottom: -10%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 300px;
+    background: linear-gradient(to top, var(--neon-pink), transparent);
+    border-radius: 300px 300px 0 0;
+    opacity: 0.15;
+    filter: blur(80px);
+    z-index: -1;
+    pointer-events: none;
+}
+
+h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    color: #fff;
+    text-shadow: 
+        0 0 5px #fff,
+        0 0 10px var(--neon-blue),
+        0 0 20px var(--neon-blue);
+    margin-bottom: 15px;
+    letter-spacing: 4px;
+    animation: neon-pulse 2s infinite alternate;
+}
+
+@keyframes neon-pulse {
+    from {
+        text-shadow: 0 0 5px #fff, 0 0 10px var(--neon-blue), 0 0 15px var(--neon-blue);
+    }
+    to {
+        text-shadow: 0 0 10px #fff, 0 0 20px var(--neon-blue), 0 0 35px var(--neon-blue), 0 0 40px var(--neon-purple);
+    }
+}
+
+/* Main Container */
+.game-container {
+    position: relative;
+    width: 450px;
+    height: 650px;
+    background-color: rgba(10, 8, 20, 0.9);
+    border: 3px solid var(--neon-blue);
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Game Canvas */
+#gameCanvas {
+    width: 100%;
+    height: 100%;
+    background-color: #05040a;
+}
+
+/* Head-Up Display (HUD) */
+.hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Orbitron', sans-serif;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.hud-item {
+    background: rgba(13, 12, 33, 0.6);
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    padding: 8px 15px;
+    border-radius: 6px;
+    backdrop-filter: blur(5px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.hud-label {
+    font-size: 0.7rem;
+    color: var(--neon-blue);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+}
+
+.hud-value {
+    font-size: 1.2rem;
+    font-weight: 800;
+    text-shadow: 0 0 5px var(--neon-blue);
+}
+
+/* Overlays (Start & Game Over Screen) */
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--glass-bg);
+    backdrop-filter: blur(8px);
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    text-align: center;
+    transition: opacity 0.3s ease;
+}
+
+.overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.overlay-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #fff;
+    text-shadow: 0 0 10px var(--neon-pink);
+    margin-bottom: 20px;
+    text-transform: uppercase;
+}
+
+.overlay-desc {
+    font-size: 0.95rem;
+    color: #b0aeff;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+/* Controls Guide inside overlay */
+.controls-guide {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 35px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.control-key {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    font-family: 'Orbitron', sans-serif;
+    box-shadow: 0 2px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Retro-Neon Buttons */
+.btn {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 14px 35px;
+    color: #fff;
+    background: transparent;
+    border: 2px solid var(--neon-pink);
+    border-radius: 30px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 15px rgba(255, 0, 127, 0.3);
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: all 0.5s ease;
+}
+
+.btn:hover::before {
+    left: 100%;
+}
+
+.btn:hover {
+    background: var(--neon-pink);
+    box-shadow: 0 0 25px var(--neon-pink);
+    transform: translateY(-2px);
+}
+
+.btn:active {
+    transform: translateY(1px);
+}
+
+/* Touch Control Overlay for Mobile/Mouse players */
+.touch-controls {
+    display: none; /* Shown dynamically in JavaScript if touch is detected, or we can always display small arrows at the bottom */
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    gap: 30px;
+    z-index: 10;
+}
+
+.touch-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(13, 12, 33, 0.6);
+    border: 2px solid var(--neon-blue);
+    color: var(--neon-blue);
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+    transition: all 0.1s ease;
+}
+
+.touch-btn:active {
+    background: var(--neon-blue);
+    color: var(--bg-color);
+    box-shadow: 0 0 20px var(--neon-blue);
+}
+
+/* Audio Control Button */
+.audio-toggle {
+    position: absolute;
+    bottom: -60px; /* Positions below the main container */
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.5);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.audio-toggle:hover {
+    border-color: var(--neon-blue);
+    color: var(--neon-blue);
+}
+
+.audio-toggle.muted {
+    border-color: var(--neon-pink);
+    color: var(--neon-pink);
+}
+
+/* Footer / Instructions link */
+.footer {
+    margin-top: 25px;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.3);
+    text-align: center;
+}

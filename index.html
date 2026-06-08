@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Drift - Retro Car Racing</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="neon-sun"></div>
+    
+    <h1 id="main-title">Neon Drift</h1>
+    
+    <div class="game-container" id="game-wrapper">
+        <!-- Head-up Display -->
+        <div class="hud">
+            <div class="hud-item">
+                <span class="hud-label">Skor</span>
+                <span class="hud-value" id="scoreVal">0000</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-label">En Yüksek</span>
+                <span class="hud-value" id="highScoreVal">0000</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-label">Hız</span>
+                <span class="hud-value" id="speedVal">0 km/h</span>
+            </div>
+        </div>
+
+        <!-- Canvas for rendering -->
+        <canvas id="gameCanvas" width="450" height="650"></canvas>
+
+        <!-- Start Overlay Screen -->
+        <div class="overlay" id="startScreen">
+            <h2 class="overlay-title">Siber Yarışa Hazırlan</h2>
+            <p class="overlay-desc">
+                Engellerden kaçın, neon arabaları solla ve en yüksek skora ulaş! Hızlandıkça kontrol zorlaşacak.
+            </p>
+            <div class="controls-guide">
+                <div>
+                    <span class="control-key">←</span> veya <span class="control-key">A</span> Sol
+                </div>
+                <div>
+                    <span class="control-key">→</span> veya <span class="control-key">D</span> Sağ
+                </div>
+            </div>
+            <button class="btn" id="startBtn">Yarışı Başlat</button>
+        </div>
+
+        <!-- Game Over Overlay Screen -->
+        <div class="overlay hidden" id="gameOverScreen">
+            <h2 class="overlay-title" style="text-shadow: 0 0 10px var(--neon-pink)">Kaza Yaptın!</h2>
+            <p class="overlay-desc" id="gameOverDesc">
+                Skorun: <strong style="color: var(--neon-blue);" id="finalScoreVal">0</strong>
+            </p>
+            <button class="btn" id="restartBtn">Tekrar Dene</button>
+        </div>
+
+        <!-- Touch Controls (Optional/On-screen) -->
+        <div class="touch-controls" id="touchControls">
+            <button class="touch-btn" id="leftBtn">←</button>
+            <button class="touch-btn" id="rightBtn">→</button>
+        </div>
+    </div>
+
+    <!-- Audio Settings -->
+    <button class="audio-toggle" id="audioToggle">Ses: AÇIK</button>
+
+    <div class="footer">
+        Klavye Yön Tuşları veya A/D ile aracı yönlendirin.
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
